@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#ff69b4" />
-  <title>Mire ment el?</title>
+  <title>Mire ment el? – Dr. Szöszi Edition</title>
   <link rel="manifest" href="manifest.json" />
   <style>
     body {
@@ -64,7 +64,7 @@
   </style>
 </head>
 <body>
-  <h1>✨ Mire ment el Szöszi?✨</h1>
+  <h1>✨ Mire ment el? — Dr. Szöszi Edition ✨</h1>
 
   <div class="summary">
     <h2>Napi összeg: <span id="dailyTotal">0</span> Ft</h2>
@@ -77,7 +77,7 @@
       <option value="Nasi">🍪 Nasi</option>
       <option value="Szépség">💄 Szépség</option>
       <option value="Ruhák">👗 Ruhák</option>
-      <option value="Mucus">💩 Hasztalan cuccok</option>
+      <option value="Mucus">💩 Mucus féle hasztalan cuccok</option>
       <option value="Egyéb">Egyéb</option>
     </select>
     <input type="text" id="note" placeholder="Megjegyzés (opcionális)" />
@@ -123,6 +123,7 @@
     }
 
     function deleteEntry(index) {
+      if (!confirm('Biztosan törlöd ezt a tételt?')) return;
       const today = new Date().toISOString().split('T')[0];
       const saved = JSON.parse(localStorage.getItem(today) || '[]');
       saved.splice(index, 1);
