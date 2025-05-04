@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#ff69b4" />
-  <title>Mire ment el? – Dr. Szöszi Edition</title>
+  <title>Mire ment el?</title>
   <link rel="manifest" href="manifest.json" />
   <style>
     body {
@@ -42,7 +42,7 @@
     }
     .entry {
       border-bottom: 1px solid #eee;
-      padding: 0.5rem 0;
+      padding: 0.5rem 0.5rem 1.5rem;
       position: relative;
     }
     .entry:last-child {
@@ -53,18 +53,25 @@
     }
     .delete-btn {
       position: absolute;
-      right: 0;
-      top: 0;
+      top: 0.5rem;
+      right: 0.5rem;
       background: transparent;
       border: none;
       color: #ff69b4;
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       cursor: pointer;
+    }
+    .time-info {
+      display: block;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #777;
+      margin-top: 0.25rem;
     }
   </style>
 </head>
 <body>
-  <h1>✨ Mire ment el? — Dr. Szöszi Edition ✨</h1>
+  <h1>✨ Mire ment el Szöszi?✨</h1>
 
   <div class="summary">
     <h2>Napi összeg: <span id="dailyTotal">0</span> Ft</h2>
@@ -110,8 +117,14 @@
         return;
       }
 
-      const today = new Date().toISOString().split('T')[0];
-      const entry = { amount, category, note, time: new Date().toLocaleTimeString() };
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const entry = {
+        amount,
+        category,
+        note,
+        time: now.toLocaleString('hu-HU')
+      };
       const saved = JSON.parse(localStorage.getItem(today) || '[]');
       saved.unshift(entry);
       localStorage.setItem(today, JSON.stringify(saved));
@@ -123,7 +136,7 @@
     }
 
     function deleteEntry(index) {
-      if (!confirm('Biztosan törlöd ezt a tételt?')) return;
+      if (!window.confirm('Biztosan törlöd ezt a tételt?')) return;
       const today = new Date().toISOString().split('T')[0];
       const saved = JSON.parse(localStorage.getItem(today) || '[]');
       saved.splice(index, 1);
@@ -138,9 +151,10 @@
         const div = document.createElement('div');
         div.className = 'entry';
         div.innerHTML = `
-          <strong>${entry.category}</strong>: ${entry.amount} Ft<br/>
-          <em>${entry.note || ''}</em> <span style="float:right;">${entry.time}</span>
-          <button class="delete-btn" onclick="deleteEntry(${index})">×</button>
+          <strong>${entry.category}</strong>: ${entry.amount} Ft
+          <button class="delete-btn" onclick="deleteEntry(${index})">×</button><br/>
+          <em>${entry.note || ''}</em>
+          <span class="time-info">${entry.time}</span>
         `;
         entriesDiv.appendChild(div);
       });
