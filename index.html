@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#ff69b4" />
   <title>Mire ment el?</title>
   <link rel="manifest" href="manifest.json" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -18,7 +19,7 @@
       color: #ff69b4;
       text-align: center;
     }
-    .entry-form, .entries, .summary {
+    .entry-form, .entries, .summary, .monthly-summary, .category-breakdown, .chart-container {
       max-width: 500px;
       margin: 1rem auto;
       background: white;
@@ -42,7 +43,7 @@
     }
     .entry {
       border-bottom: 1px solid #eee;
-      padding: 0.5rem 0.5rem 1.5rem;
+      padding: 0.5rem 0.5rem 2rem;
       position: relative;
     }
     .entry:last-child {
@@ -62,29 +63,42 @@
       cursor: pointer;
     }
     .time-info {
-      display: block;
-      text-align: center;
+      position: absolute;
+      bottom: 0.5rem;
+      right: 0.5rem;
       font-size: 0.8rem;
       color: #777;
-      margin-top: 0.25rem;
     }
   </style>
 </head>
 <body>
-  <h1>✨ Mire ment el Szöszi?✨</h1>
+  <h1>✨ Mire ment el S Szöszi?✨</h1>
 
   <div class="summary">
     <h2>Napi összeg: <span id="dailyTotal">0</span> Ft</h2>
   </div>
 
+  <div class="monthly-summary">
+    <h2>E havi összesen: <span id="monthlyTotal">0</span> Ft</h2>
+  </div>
+
+  <div class="category-breakdown">
+    <h3>Kategóriánkénti bontás (hónap):</h3>
+    <ul id="categoryList"></ul>
+  </div>
+
+  <div class="chart-container">
+    <canvas id="categoryChart"></canvas>
+  </div>
+
   <div class="entry-form">
     <input type="number" id="amount" placeholder="Összeg (Ft)" />
-    <select id="category">
+    <select id="categorySelect">
       <option value="Kávé">☕ Kávé</option>
       <option value="Nasi">🍪 Nasi</option>
       <option value="Szépség">💄 Szépség</option>
       <option value="Ruhák">👗 Ruhák</option>
-      <option value="Mucus">💩 Mucus féle hasztalan cuccok</option>
+      <option value="Hasztalan">💩 Hasztalan cuccok</option>
       <option value="Egyéb">Egyéb</option>
     </select>
     <input type="text" id="note" placeholder="Megjegyzés (opcionális)" />
@@ -95,21 +109,27 @@
 
   <script>
     const amountInput = document.getElementById('amount');
-    const categoryInput = document.getElementById('category');
+    const categorySelect = document.getElementById('categorySelect');
     const noteInput = document.getElementById('note');
     const entriesDiv = document.getElementById('entries');
     const dailyTotalSpan = document.getElementById('dailyTotal');
+    const monthlyTotalSpan = document.getElementById('monthlyTotal');
+    const categoryList = document.getElementById('categoryList');
+    const chartCtx = document.getElementById('categoryChart').getContext('2d');
+    let categoryChart;
 
     function loadEntries() {
-      const today = new Date().toISOString().split('T')[0];
-      const saved = JSON.parse(localStorage.getItem(today) || '[]');
+      const today = new Date();
+      const dateKey = today.toISOString().split('T')[0];
+      const saved = JSON.parse(localStorage.getItem(dateKey) || '[]');
       renderEntries(saved);
       updateTotal(saved);
+      updateMonthlySummary();
     }
 
     function addEntry() {
       const amount = parseFloat(amountInput.value);
-      const category = categoryInput.value;
+      const category = categorySelect.value;
       const note = noteInput.value;
 
       if (isNaN(amount) || amount <= 0) {
@@ -118,21 +138,22 @@
       }
 
       const now = new Date();
-      const today = now.toISOString().split('T')[0];
+      const dateKey = now.toISOString().split('T')[0];
       const entry = {
         amount,
         category,
         note,
         time: now.toLocaleString('hu-HU')
       };
-      const saved = JSON.parse(localStorage.getItem(today) || '[]');
+      const saved = JSON.parse(localStorage.getItem(dateKey) || '[]');
       saved.unshift(entry);
-      localStorage.setItem(today, JSON.stringify(saved));
+      localStorage.setItem(dateKey, JSON.stringify(saved));
 
       amountInput.value = '';
       noteInput.value = '';
       renderEntries(saved);
       updateTotal(saved);
+      updateMonthlySummary();
     }
 
     function deleteEntry(index) {
@@ -143,6 +164,7 @@
       localStorage.setItem(today, JSON.stringify(saved));
       renderEntries(saved);
       updateTotal(saved);
+      updateMonthlySummary();
     }
 
     function renderEntries(entries) {
@@ -151,8 +173,8 @@
         const div = document.createElement('div');
         div.className = 'entry';
         div.innerHTML = `
-          <strong>${entry.category}</strong>: ${entry.amount} Ft
-          <button class="delete-btn" onclick="deleteEntry(${index})">×</button><br/>
+          <button class="delete-btn" onclick="deleteEntry(${index})">×</button>
+          <strong>${entry.category}</strong>: ${entry.amount} Ft<br/>
           <em>${entry.note || ''}</em>
           <span class="time-info">${entry.time}</span>
         `;
@@ -163,6 +185,60 @@
     function updateTotal(entries) {
       const total = entries.reduce((sum, e) => sum + e.amount, 0);
       dailyTotalSpan.textContent = total.toLocaleString('hu-HU');
+    }
+
+    function updateMonthlySummary() {
+      let total = 0;
+      const now = new Date();
+      const currentMonth = now.toISOString().slice(0, 7);
+      const categoryTotals = {};
+
+      for (let key in localStorage) {
+        if (key.startsWith(currentMonth)) {
+          const dayEntries = JSON.parse(localStorage.getItem(key) || '[]');
+          dayEntries.forEach(entry => {
+            total += entry.amount;
+            categoryTotals[entry.category] = (categoryTotals[entry.category] || 0) + entry.amount;
+          });
+        }
+      }
+
+      monthlyTotalSpan.textContent = total.toLocaleString('hu-HU');
+
+      categoryList.innerHTML = '';
+      for (let cat in categoryTotals) {
+        const li = document.createElement('li');
+        li.textContent = `${cat}: ${categoryTotals[cat].toLocaleString('hu-HU')} Ft`;
+        categoryList.appendChild(li);
+      }
+
+      const labels = Object.keys(categoryTotals);
+      const data = Object.values(categoryTotals);
+
+      if (categoryChart) categoryChart.destroy();
+
+      categoryChart = new Chart(chartCtx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Költés kategóriánként (Ft)',
+            data: data,
+            backgroundColor: '#ff69b4'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
     }
 
     loadEntries();
