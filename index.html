@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#ff69b4" />
+  <title>Mire ment el? – Dr. Szöszi Edition</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #fff0f5;
+      color: #333;
+      margin: 0;
+      padding: 1rem;
+    }
+    h1 {
+      color: #ff69b4;
+      text-align: center;
+    }
+    .entry-form, .entries, .summary {
+      max-width: 500px;
+      margin: 1rem auto;
+      background: white;
+      padding: 1rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, select, button {
+      width: 100%;
+      padding: 0.6rem;
+      margin: 0.5rem 0;
+      border-radius: 0.5rem;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #ff69b4;
+      color: white;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+    .entry {
+      border-bottom: 1px solid #eee;
+      padding: 0.5rem 0;
+    }
+    .entry:last-child {
+      border-bottom: none;
+    }
+    .entry strong {
+      color: #ff69b4;
+    }
+  </style>
+</head>
+<body>
+  <h1>✨ Mire ment el? — Dr. Szöszi Edition ✨</h1>
+
+  <div class="summary">
+    <h2>Napi összeg: <span id="dailyTotal">0</span> Ft</h2>
+  </div>
+
+  <div class="entry-form">
+    <input type="number" id="amount" placeholder="Összeg (Ft)" />
+    <select id="category">
+      <option value="Kávé">☕ Kávé</option>
+      <option value="Nasi">🍪 Nasi</option>
+      <option value="Szépség">💄 Szépség</option>
+      <option value="Ruhák">👗 Ruhák</option>
+      <option value="Mucus">💩 Mucus féle hasztalan cuccok</option>
+      <option value="Egyéb">Egyéb</option>
+    </select>
+    <input type="text" id="note" placeholder="Megjegyzés (opcionális)" />
+    <button onclick="addEntry()">+ Hozzáad</button>
+  </div>
+
+  <div class="entries" id="entries"></div>
+
+  <script>
+    const amountInput = document.getElementById('amount');
+    const categoryInput = document.getElementById('category');
+    const noteInput = document.getElementById('note');
+    const entriesDiv = document.getElementById('entries');
+    const dailyTotalSpan = document.getElementById('dailyTotal');
+
+    function loadEntries() {
+      const today = new Date().toISOString().split('T')[0];
+      const saved = JSON.parse(localStorage.getItem(today) || '[]');
+      renderEntries(saved);
+      updateTotal(saved);
+    }
+
+    function addEntry() {
+      const amount = parseFloat(amountInput.value);
+      const category = categoryInput.value;
+      const note = noteInput.value;
+
+      if (isNaN(amount) || amount <= 0) {
+        alert('Kérlek, adj meg érvényes összeget.');
+        return;
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      const entry = { amount, category, note, time: new Date().toLocaleTimeString() };
+      const saved = JSON.parse(localStorage.getItem(today) || '[]');
+      saved.unshift(entry);
+      localStorage.setItem(today, JSON.stringify(saved));
+
+      amountInput.value = '';
+      noteInput.value = '';
+      renderEntries(saved);
+      updateTotal(saved);
+    }
+
+    function renderEntries(entries) {
+      entriesDiv.innerHTML = '';
+      entries.forEach(entry => {
+        const div = document.createElement('div');
+        div.className = 'entry';
+        div.innerHTML = `<strong>${entry.category}</strong>: ${entry.amount} Ft<br/><em>${entry.note || ''}</em> <span style="float:right;">${entry.time}</span>`;
+        entriesDiv.appendChild(div);
+      });
+    }
+
+    function updateTotal(entries) {
+      const total = entries.reduce((sum, e) => sum + e.amount, 0);
+      dailyTotalSpan.textContent = total.toLocaleString('hu-HU');
+    }
+
+    loadEntries();
+  </script>
+</body>
+</html>
