@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#ff69b4" />
-  <title>Mire ment el? – Dr. Szöszi Edition</title>
+  <title>Mire ment el?-Dr. Szöszi Edition</title>
   <link rel="manifest" href="manifest.json" />
   <style>
     body {
@@ -43,12 +43,23 @@
     .entry {
       border-bottom: 1px solid #eee;
       padding: 0.5rem 0;
+      position: relative;
     }
     .entry:last-child {
       border-bottom: none;
     }
     .entry strong {
       color: #ff69b4;
+    }
+    .delete-btn {
+      position: absolute;
+      right: 0;
+      top: 0;
+      background: transparent;
+      border: none;
+      color: #ff69b4;
+      font-size: 1.2rem;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -111,12 +122,25 @@
       updateTotal(saved);
     }
 
+    function deleteEntry(index) {
+      const today = new Date().toISOString().split('T')[0];
+      const saved = JSON.parse(localStorage.getItem(today) || '[]');
+      saved.splice(index, 1);
+      localStorage.setItem(today, JSON.stringify(saved));
+      renderEntries(saved);
+      updateTotal(saved);
+    }
+
     function renderEntries(entries) {
       entriesDiv.innerHTML = '';
-      entries.forEach(entry => {
+      entries.forEach((entry, index) => {
         const div = document.createElement('div');
         div.className = 'entry';
-        div.innerHTML = `<strong>${entry.category}</strong>: ${entry.amount} Ft<br/><em>${entry.note || ''}</em> <span style="float:right;">${entry.time}</span>`;
+        div.innerHTML = `
+          <strong>${entry.category}</strong>: ${entry.amount} Ft<br/>
+          <em>${entry.note || ''}</em> <span style="float:right;">${entry.time}</span>
+          <button class="delete-btn" onclick="deleteEntry(${index})">×</button>
+        `;
         entriesDiv.appendChild(div);
       });
     }
